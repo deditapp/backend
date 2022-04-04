@@ -4,7 +4,8 @@
 	"description": "Prototype backend written in TypeScript, using Prisma.",
 	"main": "src/index.ts",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"prepare": "husky install"
 	},
 	"repository": {
 		"type": "git",
@@ -19,6 +20,8 @@
 	"homepage": "https://github.com/deditapp/backend#readme",
 	"devDependencies": {
 		"@types/node": "^17.0.23",
+		"husky": "^7.0.4",
+		"lint-staged": "^12.3.7",
 		"prettier": "^2.6.2",
 		"prisma": "^3.11.1",
 		"ts-node": "^10.7.0",
@@ -27,5 +30,8 @@
 	},
 	"dependencies": {
 		"@prisma/client": "^3.11.1"
+	},
+	"lint-staged": {
+		"*.{md,ts}": "prettier --write"
 	}
 }
