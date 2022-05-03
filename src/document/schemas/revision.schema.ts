@@ -5,7 +5,7 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 
 import { BlockSchema } from "./block.schema";
 
-type IDocumentRevision = Document & DocumentRevision;
+export type IDocumentRevision = Document & DocumentRevision;
 
 @Schema()
 export class DocumentRevisionSchema {

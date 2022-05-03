@@ -3,15 +3,15 @@ import { Model } from "mongoose";
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 
-import { DocumentModel, IDocumentDocument } from "./schemas/document.schema";
+import { DocumentSchema, IDocument } from "../schemas/document.schema";
 
 import type { Document } from "@dedit/models/src/v1";
 
 @Injectable()
 export class DocumentService {
 	constructor(
-		@InjectModel(DocumentModel.name)
-		private readonly documentModel: Model<IDocumentDocument>
+		@InjectModel(DocumentSchema.name)
+		private readonly documentModel: Model<IDocument>
 	) {}
 
 	async findManyRaw(): Promise<Document[]> {
