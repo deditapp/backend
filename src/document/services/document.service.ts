@@ -14,10 +14,21 @@ export class DocumentService {
 		private readonly documentModel: Model<IDocumentDocument>
 	) {}
 
-	async findMany(): Promise<Document[]> {
+	async findManyRaw(): Promise<Document[]> {
 		return this.documentModel.find().exec();
 	}
-	findOne(id: string): Promise<Document> {
+	findOneRaw(id: string): Promise<Document> {
 		return this.documentModel.findOne({ id }).exec();
+	}
+
+	/**
+	 * Recursively looks up a document.
+	 * @param id
+	 */
+	async recursiveFind(id: string): Promise<Document> {
+		const root = (await this.documentModel.findOne({ id })) as Document;
+		if (!root) {
+			return;
+		}
 	}
 }
