@@ -5,9 +5,10 @@ import { Document as MongooseDocument } from "mongoose";
 
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 
-import { DocumentRevisionSchema } from "./revision.schema";
-
-export type IDocument = Document & MongooseDocument;
+// omit the revision field as this is stored in a separate model.
+export type IDocument = Omit<Document, "revisions"> & {
+	revisions: string[];
+} & MongooseDocument;
 
 @Schema()
 export class DocumentSchema {
@@ -16,7 +17,7 @@ export class DocumentSchema {
 	@Prop()
 	title: string;
 	@Prop()
-	revisions: DocumentRevisionSchema[];
+	revisions: string[];
 	@Prop()
 	schemaVersion: Version;
 }
