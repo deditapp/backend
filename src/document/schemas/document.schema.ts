@@ -1,14 +1,19 @@
-import type { BlockType, Document } from "@dedit/models/src/v1";
+import type { Document } from "@dedit/models/src/v1";
 import type { Version } from "@dedit/models/src/version";
 
 import { Document as MongooseDocument } from "mongoose";
 
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 
-// omit the revision field as this is stored in a separate model.
-export type IDocument = Omit<Document, "revisions"> & {
+/**
+ * A utility type representing a stored document.
+ */
+export type DocumentWithIds = Omit<Document, "revisions"> & {
 	revisions: string[];
-} & MongooseDocument;
+};
+
+// omit the revision field as this is stored in a separate model.
+export type IDocument = DocumentWithIds & MongooseDocument;
 
 @Schema()
 export class DocumentSchema {
