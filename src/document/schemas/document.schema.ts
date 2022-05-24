@@ -1,5 +1,5 @@
-import type { Document } from "@dedit/models/src/v1";
-import type { Version } from "@dedit/models/src/version";
+import type { Document } from "@dedit/models/dist/v1";
+import type { Version } from "@dedit/models/dist/version";
 
 import { Document as MongooseDocument } from "mongoose";
 

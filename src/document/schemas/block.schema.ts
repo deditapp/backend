@@ -1,6 +1,6 @@
 import { Document } from "mongoose";
 
-import { BlockType, RootBlock } from "@dedit/models/src/v1";
+import { BlockType, RootBlock } from "@dedit/models/dist/v1";
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 
 export type IRootBlock = Document & RootBlock;

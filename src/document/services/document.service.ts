@@ -1,12 +1,13 @@
 import { Model } from "mongoose";
+import { AResult, ok } from "src/types/result";
 
 import {
 	AnyBlock,
 	BlockType,
 	Document,
 	DocumentRevision,
-} from "@dedit/models/src/v1";
-import { Injectable } from "@nestjs/common";
+} from "@dedit/models/dist/v1";
+import { Injectable, Logger } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 
 import { IRootBlock, RootBlockSchema } from "../schemas/block.schema";
@@ -19,6 +20,7 @@ import {
 	DocumentRevisionSchema,
 	IDocumentRevision,
 } from "../schemas/revision.schema";
+import { ErrorKind } from "./errors";
 
 @Injectable()
 export class DocumentService {
@@ -31,11 +33,26 @@ export class DocumentService {
 		private readonly revisionModel: Model<IDocumentRevision>
 	) {}
 
-	async findManyRaw(): Promise<DocumentWithIds[]> {
+	findManyRaw(): Promise<DocumentWithIds[]> {
 		return this.documentModel.find().exec();
 	}
 	findOneRaw(id: string): Promise<DocumentWithIds> {
 		return this.documentModel.findOne({ id }).exec();
+	}
+
+	async create(document: Document): AResult<Document, ErrorKind> {
+		await this.documentModel
+			.create(document)
+			.then((document) => document.save());
+		return ok(document);
+	}
+
+	async update(id: string, update: Partial<Document>): Promise<string> {
+		if (!(await this.documentModel.findOne({ id }))) {
+			throw new Error(`Document ${id} not found`);
+		}
+		await this.documentModel.findOneAndUpdate({ id }, update);
+		return id;
 	}
 
 	/**
@@ -43,9 +60,10 @@ export class DocumentService {
 	 * @param id
 	 */
 	async constructDocument(id: string): Promise<Document> {
+		Logger.log(`Constructing document ${id}`);
 		const root = await this.documentModel.findOne({ id });
 		if (!root) {
-			return;
+			throw new Error(`Document ${id} not found`);
 		}
 		// look up revisions
 		const revisions = (await this.revisionModel.find({

@@ -1,6 +1,6 @@
 import { Document } from "mongoose";
 
-import { DocumentRevision } from "@dedit/models/src/v1";
+import { DocumentRevision } from "@dedit/models/dist/v1";
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 
 import { BlockSchema } from "./block.schema";
