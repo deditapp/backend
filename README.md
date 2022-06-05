@@ -1,3 +1,3 @@
-# backend
+# @deditapp/backend
 
-Prototype backend written in TypeScript, using Prisma.
+Dedit backend server and database interface.

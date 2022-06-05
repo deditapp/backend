@@ -4,21 +4,29 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("POSTGRES_URL")
+}
+
+model User {
+  id        String     @id @db.Uuid @default(uuid())
+  documents Document[]
 }
 
 model Document {
-  id         String   @id @default(cuid())
-  title      String
-  rawContent String
-  updatedAt  DateTime @updatedAt
-  createdAt  DateTime @default(now())
+  id        String             @id @db.Uuid @default(uuid())
+  owner     User               @relation(fields: [ownerId], references: [id])
+  ownerId   String             @db.Uuid
+  revisions DocumentRevision[]
+  createdAt DateTime           @default(now()) @db.Timestamp
+  updatedAt DateTime           @default(now()) @db.Timestamp
+  title String @default("New Document")
+  tags String[]
 }
 
-model Block {
-  id        String   @id @default(uuid()) @db.Uuid
-  content   String   @db.Text
-  tags      String[] @db.VarChar(32)
-  updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now())
+model DocumentRevision {
+  id         String   @id @db.Uuid @default(uuid())
+  document   Document @relation(fields: [documentId], references: [id])
+  documentId String   @db.Uuid
+  blockId    String   @db.Uuid
+  createdAt  DateTime @default(now()) @db.Timestamp
 }
