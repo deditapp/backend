@@ -1,16 +1,22 @@
 import { ValidationError } from "joi";
 import { MongoClient, MongoError } from "mongodb";
-import { AResult, intoResult, ok } from "src/types/result";
-import { validate } from "src/types/validate";
 import { v4 as uuid } from "uuid";
 
 import { BlockType, RootBlock } from "@dedit/models/dist/v1";
 import { RootBlockSchema } from "@dedit/models/dist/v1/validation/block";
-import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import {
+	Injectable,
+	Logger,
+	OnModuleDestroy,
+	OnModuleInit,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
+import { AResult, intoResult, ok } from "../../../types/result";
+import { validate } from "../../../types/validate";
+
 @Injectable()
-export class BlockService implements OnModuleInit {
+export class BlockService implements OnModuleInit, OnModuleDestroy {
 	private readonly logger = new Logger(BlockService.name);
 	private readonly mongo = new MongoClient(
 		this.config.getOrThrow("MONGODB_URL")
@@ -26,6 +32,11 @@ export class BlockService implements OnModuleInit {
 		this.logger.log("Connecting to MongoDB...");
 		await this.mongo.connect();
 		this.logger.log("Connected to MongoDB");
+	}
+
+	async onModuleDestroy() {
+		this.logger.log("Disconnecting from MongoDB...");
+		await this.mongo.close();
 	}
 
 	/**

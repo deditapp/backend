@@ -116,7 +116,7 @@ export const intoResult = async <T, E>(promise: Promise<T>): AResult<T, E> => {
 	try {
 		const t = await promise;
 		return ok(t) as Result<T, E>;
-	} catch (err) {
-		return err(err as E);
+	} catch (e) {
+		return err(e as E);
 	}
 };
