@@ -1,12 +1,11 @@
 import { Module } from "@nestjs/common";
-import { MongooseModule } from "@nestjs/mongoose";
+import { ConfigModule } from "@nestjs/config";
 
-import { DocumentModule } from "./document/document.module";
+import { DocumentModule } from "./modules/document/document.module";
+import { PrismaService } from "./services/prisma.service";
 
 @Module({
-	imports: [
-		DocumentModule,
-		MongooseModule.forRoot("mongodb://localhost/dedit"),
-	],
+	imports: [DocumentModule, ConfigModule],
+	providers: [PrismaService],
 })
 export class AppModule {}

@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
+}
+
+model User {
+  id        String     @id @db.Uuid @default(uuid())
+  documents Document[]
+}
+
+model Document {
+  id        String             @id @db.Uuid @default(uuid())
+  owner     User               @relation(fields: [ownerId], references: [id])
+  ownerId   String             @db.Uuid
+  revisions DocumentRevision[]
+  createdAt DateTime           @default(now()) @db.Timestamp
+  updatedAt DateTime           @default(now()) @db.Timestamp
+  title String @default("New Document")
+  tags String[]
+}
+
+model DocumentRevision {
+  id         String   @id @db.Uuid @default(uuid())
+  document   Document @relation(fields: [documentId], references: [id])
+  documentId String   @db.Uuid
+  blockId    String   @db.Uuid
+  createdAt  DateTime @default(now()) @db.Timestamp
+}

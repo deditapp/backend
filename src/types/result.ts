@@ -13,7 +13,7 @@ export class Result<T, E> {
 	 * @param err
 	 * @returns
 	 */
-	static error<T, E>(err: E): Result<T, E> {
+	static err<T, E>(err: E): Result<T, E> {
 		return new Result(undefined, err);
 	}
 
@@ -22,14 +22,14 @@ export class Result<T, E> {
 	/**
 	 * @returns True if the result is a success.
 	 */
-	isOk(): boolean {
+	isOk(): this is Result<E, never> {
 		return this.value !== undefined;
 	}
 
 	/**
 	 * @returns True if the result is an error.
 	 */
-	isError(): boolean {
+	isErr(): this is Result<never, E> {
 		return this.error !== undefined;
 	}
 
@@ -47,7 +47,7 @@ export class Result<T, E> {
 	 * Unwrap the result.
 	 */
 	unwrapErr(): E {
-		if (!this.isError()) {
+		if (!this.isErr()) {
 			throw new Error("Result is not error");
 		}
 		return this.error;
@@ -55,16 +55,20 @@ export class Result<T, E> {
 
 	map<U>(f: (value: T) => U): Result<U, E> {
 		if (!this.isOk()) {
-			return Result.error(this.unwrapErr());
+			return Result.err(this.unwrapErr());
 		}
 		return Result.ok(f(this.unwrap()));
 	}
 
 	mapErr<F>(f: (error: E) => F): Result<T, F> {
-		if (!this.isError()) {
+		if (!this.isErr()) {
 			return Result.ok(this.unwrap());
 		}
-		return Result.error(f(this.unwrapErr()));
+		return Result.err(f(this.unwrapErr()));
+	}
+
+	intoErr(): Result<never, E> {
+		return Result.err(this.unwrapErr());
 	}
 }
 
@@ -85,7 +89,7 @@ export const ok = <T, E>(value: T): Result<T, E> => Result.ok(value);
  * @param value The inner value.
  * @returns THe result variant.
  */
-export const error = <T, E>(err: E): Result<T, E> => Result.error(err);
+export const err = <T, E>(err: E): Result<T, E> => Result.err(err);
 
 /**
  * Create an async Ok result variant.
@@ -100,8 +104,8 @@ export const asyncOk = <T, E>(value: T): AResult<T, E> =>
  * @param value The inner value.
  * @returns THe result variant.
  */
-export const asyncError = <T, E>(err: E): AResult<T, E> =>
-	Promise.resolve(Result.error(err));
+export const asyncErr = <T, E>(err: E): AResult<T, E> =>
+	Promise.resolve(Result.err(err));
 
 /**
  * Convert a promise into an asynchronous result.
@@ -113,6 +117,6 @@ export const intoResult = async <T, E>(promise: Promise<T>): AResult<T, E> => {
 		const t = await promise;
 		return ok(t) as Result<T, E>;
 	} catch (err) {
-		return error(err as E);
+		return err(err as E);
 	}
 };
