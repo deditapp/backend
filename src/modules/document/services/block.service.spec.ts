@@ -13,7 +13,7 @@ describe("BlockService", () => {
 	// create utility mongo connection
 	beforeAll(async () => {
 		config();
-		mongo = new MongoClient(process.env.TEST_MONGODB_URL);
+		mongo = new MongoClient(process.env.TEST_MONGODB_URL ?? "");
 		// connect to mongo and ping the database
 		await mongo.connect();
 		await mongo.db("dedit").admin().ping();
@@ -40,8 +40,6 @@ describe("BlockService", () => {
 	describe("create", () => {
 		it("should create a new block", async () => {
 			const result = await blockService.create();
-			expect(() => console.log(result.unwrapErr())).toThrowError();
-			expect(result.isOk()).toBe(true);
 			// unwrap block
 			const block = result.unwrap();
 			expect(block).toBeDefined();
@@ -70,13 +68,12 @@ describe("BlockService", () => {
 			const result = await blockService.block(
 				"00000000-0000-0000-0000-000000000000"
 			);
-			expect(() => console.log(result.unwrapErr())).toThrowError();
-			expect(result.isOk()).toBe(true);
 			// unwrap block
 			const block = result.unwrap();
 			expect(block).toBeDefined();
-			expect(block.id).toBe("00000000-0000-0000-0000-000000000000");
-			expect(block.type).toBe(BlockType.Root);
+
+			expect(block?.id).toBe("00000000-0000-0000-0000-000000000000");
+			expect(block?.type).toBe(BlockType.Root);
 		});
 	});
 });

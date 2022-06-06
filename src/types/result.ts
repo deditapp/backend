@@ -5,7 +5,7 @@ export class Result<T, E> {
 	/**
 	 * Create a success result.
 	 */
-	static ok<T, E>(value: T): Result<T, E> {
+	static ok<T>(value: T): Result<T, never> {
 		return new Result(value);
 	}
 	/**
@@ -13,8 +13,8 @@ export class Result<T, E> {
 	 * @param err
 	 * @returns
 	 */
-	static err<T, E>(err: E): Result<T, E> {
-		return new Result(undefined, err);
+	static err<E>(err: E): Result<never, E> {
+		return new Result(undefined, err) as Result<never, E>;
 	}
 
 	private constructor(private readonly value?: T, private readonly error?: E) {}
@@ -22,8 +22,8 @@ export class Result<T, E> {
 	/**
 	 * @returns True if the result is a success.
 	 */
-	isOk(): this is Result<E, never> {
-		return this.value !== undefined;
+	isOk(): this is Result<T, never> {
+		return this.error === undefined;
 	}
 
 	/**
@@ -38,9 +38,9 @@ export class Result<T, E> {
 	 */
 	unwrap(): T {
 		if (!this.isOk()) {
-			throw new Error("Result is not ok");
+			throw this.error;
 		}
-		return this.value;
+		return this.value as T;
 	}
 
 	/**
@@ -50,7 +50,7 @@ export class Result<T, E> {
 		if (!this.isErr()) {
 			throw new Error("Result is not error");
 		}
-		return this.error;
+		return this.error as E;
 	}
 
 	map<U>(f: (value: T) => U): Result<U, E> {
@@ -82,11 +82,11 @@ export type AResult<T, E> = Promise<Result<T, E>>;
  * @param value The inner value.
  * @returns THe result variant.
  */
-export const ok = <T, E>(value: T): Result<T, E> => Result.ok(value);
+export const ok = <T>(value: T): Result<T, never> => Result.ok(value);
 
 /**
  * Create an Err result variant.
- * @param value The inner value.
+ * @param err The inner value.
  * @returns THe result variant.
  */
 export const err = <T, E>(err: E): Result<T, E> => Result.err(err);
@@ -119,4 +119,11 @@ export const intoResult = async <T, E>(promise: Promise<T>): AResult<T, E> => {
 	} catch (e) {
 		return err(e as E);
 	}
+};
+
+export const ensureDefined = <T>(value: T | undefined): T => {
+	if (value === undefined) {
+		throw new Error("Value is undefined");
+	}
+	return value;
 };

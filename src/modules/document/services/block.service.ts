@@ -47,9 +47,8 @@ export class BlockService implements OnModuleInit, OnModuleDestroy {
 	async block(
 		id: string
 	): AResult<RootBlock | undefined, MongoError | ValidationError> {
-		const res = await intoResult<any, MongoError>(
-			this.blocks.findOne({ _id: id })
-		);
+		this.logger.log(`Fetching block ${id}...`);
+		const res = await intoResult<any, MongoError>(this.blocks.findOne({ id }));
 		// return error if failed
 		if (res.isErr()) {
 			return res;
@@ -59,6 +58,7 @@ export class BlockService implements OnModuleInit, OnModuleDestroy {
 			return ok(undefined);
 		}
 		// return block if found
+		this.logger.log("Validating block...");
 		return validate(RootBlockSchema, res.unwrap());
 	}
 
@@ -74,6 +74,7 @@ export class BlockService implements OnModuleInit, OnModuleDestroy {
 		if (res.isErr()) {
 			return res;
 		}
+		return res;
 	}
 
 	/**
