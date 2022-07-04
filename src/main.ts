@@ -9,6 +9,8 @@ async function bootstrap() {
 	if (process.env.NODE_ENV !== "production") {
 		app.enableCors({ origin: "http://localhost:3000" });
 	}
+	// set app options
+	app.enableVersioning();
 	// prevent shutdown hook issues
 	const prismaService = app.get(PrismaService);
 	await prismaService.enableShutdownHooks(app);
