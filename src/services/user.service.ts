@@ -12,10 +12,7 @@ interface UserCreatePayload {
 export class UserService {
 	private readonly logger = new Logger(UserService.name);
 
-	constructor(
-		private readonly prisma: PrismaService,
-		private readonly firebase: FirebaseService
-	) {}
+	constructor(private readonly prisma: PrismaService, private readonly firebase: FirebaseService) {}
 
 	/**
 	 * Create a new user.
@@ -46,6 +43,15 @@ export class UserService {
 	 */
 	async fetchUserFromUid(uid: string) {
 		return this.prisma.user.findUnique({ where: { firebaseUid: uid } });
+	}
+
+	/**
+	 * Log a user in.
+	 * @param email The user's email address.
+	 * @returns The user's JWT token.
+	 */
+	async generateLoginLink(email: string): Promise<string> {
+		return await this.firebase.generateLoginLink(email);
 	}
 
 	/**

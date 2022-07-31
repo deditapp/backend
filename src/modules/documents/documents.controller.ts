@@ -5,15 +5,7 @@ import { DocumentGuard } from "src/guards/DocumentGuard";
 import { IntoUser } from "src/pipes/into-user.pipe";
 import { UserService } from "src/services/user.service";
 
-import {
-	Controller,
-	Get,
-	NotFoundException,
-	Param,
-	Patch,
-	Post,
-	UseGuards,
-} from "@nestjs/common";
+import { Controller, Get, NotFoundException, Param, Patch, Post, UseGuards } from "@nestjs/common";
 import { User } from "@prisma/client";
 
 import { DocumentService } from "./services/document.service";
@@ -21,10 +13,7 @@ import { DocumentService } from "./services/document.service";
 @Controller({ path: "/documents", version: "1" })
 @UseGuards(AuthenticatedGuard)
 export class DocumentsControllerV1 {
-	constructor(
-		private readonly users: UserService,
-		private readonly documents: DocumentService
-	) {}
+	constructor(private readonly users: UserService, private readonly documents: DocumentService) {}
 
 	@Get()
 	async findMany(@Bearer(IntoUser) user: User): Promise<Document[]> {
@@ -39,31 +28,27 @@ export class DocumentsControllerV1 {
 
 	@Get(":documentId")
 	@UseGuards(DocumentGuard)
-	async findOne(
-		@Bearer(IntoUser) user: User,
-		@Param("documentId") id: string
-	): Promise<Document> {
+	async findOne(@Bearer(IntoUser) user: User, @Param("documentId") id: string): Promise<Document> {
 		const document = await this.users.fetchOwnedDocument(user.id, id);
 		if (!document) {
 			throw new NotFoundException();
 		}
-		return document;
+		return {
+			...document,
+			createdAt: document.createdAt.toISOString(),
+			updatedAt: document.updatedAt.toISOString(),
+		};
 	}
 
 	@Post()
 	async create(): Promise<string> {
-		const result = await this.documents.create(
-			"00000000-0000-0000-0000-000000000000"
-		);
+		const result = await this.documents.create("00000000-0000-0000-0000-000000000000");
 		return result.unwrap();
 	}
 
 	@Patch(":documentId")
-	async update(
-		@Param("documentId") id: string,
-		update: Partial<Document>
-	): Promise<string> {
-		// await this.documentService.update(id, update);
+	async update(@Param("documentId") id: string, update: Document): Promise<string> {
+		await this.documents.update(id, update);
 		return id;
 	}
 }

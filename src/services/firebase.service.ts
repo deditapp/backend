@@ -1,15 +1,29 @@
-import { initializeApp } from "firebase-admin";
-import { applicationDefault } from "firebase-admin/app";
+import admin from "firebase-admin";
 import { CreateRequest } from "firebase-admin/lib/auth/auth-config";
 import { UserRecord } from "firebase-admin/lib/auth/user-record";
 
 import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+
+const firebaseConfig = {
+	apiKey: "AIzaSyCa8c7l6ZwxrDGX5bKwOyiizVekQ-vh5Lc",
+	authDomain: "deditapp-auth.firebaseapp.com",
+	projectId: "deditapp-auth",
+	storageBucket: "deditapp-auth.appspot.com",
+	messagingSenderId: "926805131176",
+	appId: "1:926805131176:web:e5e8ee0d06a0f37255e79d",
+	measurementId: "G-EQPSJRHCST",
+};
+
+const app = admin.initializeApp(firebaseConfig);
 
 @Injectable()
 export class FirebaseService {
-	private readonly app = initializeApp({
-		credential: applicationDefault(),
-	});
+	private get app() {
+		return app;
+	}
+
+	constructor(private readonly config: ConfigService) {}
 
 	/**
 	 * Create a JWT for the user with the given UID.
@@ -37,6 +51,10 @@ export class FirebaseService {
 		return this.app.auth().createUser(request);
 	}
 
+	async fetchLoginToken() {
+		// return this.app.auth().createCustomToken();/
+	}
+
 	/**
 	 * Fetch a user by a JWT token.
 	 * @param token The JWT token.
@@ -52,6 +70,17 @@ export class FirebaseService {
 			return null;
 		}
 		return this.app.auth().getUser(uid);
+	}
+
+	/**
+	 * Generate a login link for a new user.
+	 * @param email The user's email.
+	 * @returns The login link.
+	 */
+	async generateLoginLink(email: string) {
+		return this.app
+			.auth()
+			.generateSignInWithEmailLink(email, { url: this.config.getOrThrow("LOGIN_REDIRECT_URL") });
 	}
 
 	/**
