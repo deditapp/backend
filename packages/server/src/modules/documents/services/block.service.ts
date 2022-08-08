@@ -4,12 +4,7 @@ import { v4 as uuid } from "uuid";
 
 import { BlockType, RootBlock } from "@dedit/models/dist/v1";
 import { RootBlockSchema } from "@dedit/models/dist/v1/validation/block";
-import {
-	Injectable,
-	Logger,
-	OnModuleDestroy,
-	OnModuleInit,
-} from "@nestjs/common";
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
 import { AResult, intoResult, ok } from "../../../types/result";
@@ -18,9 +13,7 @@ import { validate } from "../../../types/validate";
 @Injectable()
 export class BlockService implements OnModuleInit, OnModuleDestroy {
 	private readonly logger = new Logger(BlockService.name);
-	private readonly mongo = new MongoClient(
-		this.config.getOrThrow("MONGODB_URL")
-	);
+	private readonly mongo = new MongoClient(this.config.getOrThrow("MONGODB_URL"));
 
 	private get blocks() {
 		return this.mongo.db("dedit").collection("blocks");
@@ -44,9 +37,7 @@ export class BlockService implements OnModuleInit, OnModuleDestroy {
 	 * @param id The root block ID.
 	 * @returns The root block, if it is found.
 	 */
-	async block(
-		id: string
-	): AResult<RootBlock | undefined, MongoError | ValidationError> {
+	async block(id: string): AResult<RootBlock | undefined, MongoError | ValidationError> {
 		this.logger.log(`Fetching block ${id}...`);
 		const res = await intoResult<any, MongoError>(this.blocks.findOne({ id }));
 		// return error if failed
@@ -67,9 +58,7 @@ export class BlockService implements OnModuleInit, OnModuleDestroy {
 	 * @param id The root block ID.
 	 * @returns The full document tree.
 	 */
-	async tree(
-		id: string
-	): AResult<RootBlock | undefined, MongoError | ValidationError> {
+	async tree(id: string): AResult<RootBlock | undefined, MongoError | ValidationError> {
 		const res = await this.block(id);
 		if (res.isErr()) {
 			return res;

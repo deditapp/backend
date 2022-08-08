@@ -96,16 +96,14 @@ export const err = <T, E>(err: E): Result<T, E> => Result.err(err);
  * @param value The inner value.
  * @returns THe result variant.
  */
-export const asyncOk = <T, E>(value: T): AResult<T, E> =>
-	Promise.resolve(Result.ok(value));
+export const asyncOk = <T, E>(value: T): AResult<T, E> => Promise.resolve(Result.ok(value));
 
 /**
  * Create an async Err result variant.
  * @param value The inner value.
  * @returns THe result variant.
  */
-export const asyncErr = <T, E>(err: E): AResult<T, E> =>
-	Promise.resolve(Result.err(err));
+export const asyncErr = <T, E>(err: E): AResult<T, E> => Promise.resolve(Result.err(err));
 
 /**
  * Convert a promise into an asynchronous result.
