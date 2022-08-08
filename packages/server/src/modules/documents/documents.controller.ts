@@ -5,7 +5,16 @@ import { DocumentGuard } from "src/guards/DocumentGuard";
 import { IntoUser } from "src/pipes/into-user.pipe";
 import { UserService } from "src/services/user.service";
 
-import { Controller, Get, NotFoundException, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import {
+	Body,
+	Controller,
+	Get,
+	NotFoundException,
+	Param,
+	Patch,
+	Post,
+	UseGuards,
+} from "@nestjs/common";
 import { ApiProperty, ApiPropertyOptional, ApiResponse } from "@nestjs/swagger";
 import { User } from "@prisma/client";
 
@@ -83,7 +92,10 @@ export class DocumentsControllerV1 {
 
 	@Patch(":documentId")
 	@ApiResponse({ status: 200, type: String })
-	async update(@Param("documentId") id: string, update: DocumentUpdateDto): Promise<string> {
+	async update(
+		@Param("documentId") id: string,
+		@Body() update: DocumentUpdateDto
+	): Promise<string> {
 		await this.documents.update(id, { ...update, id });
 		return id;
 	}
