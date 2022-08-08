@@ -1,5 +1,6 @@
 services:
   pg:
+    container_name: dedit_pg
     image: postgres:alpine
     ports:
       - "5432:5432"
@@ -9,6 +10,7 @@ services:
       POSTGRES_DB: "postgres"
 
   mongo:
+    container_name: dedit_mongo
     image: mvertes/alpine-mongo
     ports:
       - "27017:27017"
