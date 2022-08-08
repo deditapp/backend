@@ -65,9 +65,7 @@ describe("BlockService", () => {
 		});
 
 		it("should fetch a root block with the given ID", async () => {
-			const result = await blockService.block(
-				"00000000-0000-0000-0000-000000000000"
-			);
+			const result = await blockService.block("00000000-0000-0000-0000-000000000000");
 			// unwrap block
 			const block = result.unwrap();
 			expect(block).toBeDefined();
