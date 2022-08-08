@@ -6,9 +6,38 @@ import { IntoUser } from "src/pipes/into-user.pipe";
 import { UserService } from "src/services/user.service";
 
 import { Controller, Get, NotFoundException, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { ApiProperty, ApiPropertyOptional, ApiResponse } from "@nestjs/swagger";
 import { User } from "@prisma/client";
 
 import { DocumentService } from "./services/document.service";
+
+class DocumentDto implements Document {
+	@ApiProperty()
+	id!: string;
+	@ApiProperty()
+	title!: string;
+	@ApiProperty()
+	tags!: string[];
+	@ApiProperty()
+	createdAt!: string;
+	@ApiProperty()
+	updatedAt!: string;
+	@ApiProperty()
+	ownerId!: string;
+}
+
+class DocumentUpdateDto implements Partial<Document> {
+	@ApiPropertyOptional()
+	title!: string;
+	@ApiPropertyOptional()
+	tags!: string[];
+	@ApiPropertyOptional()
+	createdAt!: string;
+	@ApiPropertyOptional()
+	updatedAt!: string;
+	@ApiPropertyOptional()
+	ownerId!: string;
+}
 
 @Controller({ path: "/documents", version: "1" })
 @UseGuards(AuthenticatedGuard)
@@ -16,7 +45,8 @@ export class DocumentsControllerV1 {
 	constructor(private readonly users: UserService, private readonly documents: DocumentService) {}
 
 	@Get()
-	async findMany(@Bearer(IntoUser) user: User): Promise<Document[]> {
+	@ApiResponse({ type: [DocumentDto] })
+	async findMany(@Bearer(IntoUser) user: User): Promise<DocumentDto[]> {
 		// lookup raw documents
 		const documents = await this.documents.documentsByOwner(user.id);
 		// if error, throw it
@@ -28,7 +58,11 @@ export class DocumentsControllerV1 {
 
 	@Get(":documentId")
 	@UseGuards(DocumentGuard)
-	async findOne(@Bearer(IntoUser) user: User, @Param("documentId") id: string): Promise<Document> {
+	@ApiResponse({ type: DocumentDto })
+	async findOne(
+		@Bearer(IntoUser) user: User,
+		@Param("documentId") id: string
+	): Promise<DocumentDto> {
 		const document = await this.users.fetchOwnedDocument(user.id, id);
 		if (!document) {
 			throw new NotFoundException();
@@ -41,14 +75,16 @@ export class DocumentsControllerV1 {
 	}
 
 	@Post()
+	@ApiResponse({ status: 200, type: String })
 	async create(): Promise<string> {
 		const result = await this.documents.create("00000000-0000-0000-0000-000000000000");
 		return result.unwrap();
 	}
 
 	@Patch(":documentId")
-	async update(@Param("documentId") id: string, update: Document): Promise<string> {
-		await this.documents.update(id, update);
+	@ApiResponse({ status: 200, type: String })
+	async update(@Param("documentId") id: string, update: DocumentUpdateDto): Promise<string> {
+		await this.documents.update(id, { ...update, id });
 		return id;
 	}
 }
