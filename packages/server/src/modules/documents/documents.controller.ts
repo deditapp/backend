@@ -15,38 +15,11 @@ import {
 	Post,
 	UseGuards,
 } from "@nestjs/common";
-import { ApiProperty, ApiPropertyOptional, ApiResponse } from "@nestjs/swagger";
+import { ApiResponse } from "@nestjs/swagger";
 import { User } from "@prisma/client";
 
+import { DocumentDto, UpdateDocumentPayloadDto } from "./documents.dto";
 import { DocumentService } from "./services/document.service";
-
-class DocumentDto implements Document {
-	@ApiProperty()
-	id!: string;
-	@ApiProperty()
-	title!: string;
-	@ApiProperty()
-	tags!: string[];
-	@ApiProperty()
-	createdAt!: string;
-	@ApiProperty()
-	updatedAt!: string;
-	@ApiProperty()
-	ownerId!: string;
-}
-
-class DocumentUpdateDto implements Partial<Document> {
-	@ApiPropertyOptional()
-	title!: string;
-	@ApiPropertyOptional()
-	tags!: string[];
-	@ApiPropertyOptional()
-	createdAt!: string;
-	@ApiPropertyOptional()
-	updatedAt!: string;
-	@ApiPropertyOptional()
-	ownerId!: string;
-}
 
 @Controller({ path: "/documents", version: "1" })
 @UseGuards(AuthenticatedGuard)
@@ -94,7 +67,7 @@ export class DocumentsControllerV1 {
 	@ApiResponse({ status: 200, type: String })
 	async update(
 		@Param("documentId") id: string,
-		@Body() update: DocumentUpdateDto
+		@Body() update: UpdateDocumentPayloadDto
 	): Promise<string> {
 		await this.documents.update(id, { ...update, id });
 		return id;
