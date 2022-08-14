@@ -32,15 +32,21 @@ export class UpdateDocumentPayloadDto implements Partial<Document> {
 	ownerId!: string;
 }
 
-export class UpdateDocumentDto {
+export class AnyBlockDto {
 	@ApiPropertyOptional()
-	document!: UpdateDocumentPayloadDto;
+	id!: string;
+	@ApiProperty({ enum: BlockType })
+	type!: BlockType;
+	@ApiPropertyOptional({ type: () => [AnyBlockDto] })
+	children?: AnyBlock[];
+	@ApiPropertyOptional()
+	data!: any;
 }
 
 export class UpdateRootBlockDto implements DeepPartial<RootBlock> {
-	@ApiPropertyOptional()
+	@ApiPropertyOptional({ type: [AnyBlockDto] })
 	children?: AnyBlock[];
-	@ApiPropertyOptional()
+	@ApiPropertyOptional({ type: [String] })
 	tags?: string[];
 }
 
