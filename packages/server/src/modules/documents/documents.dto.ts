@@ -35,7 +35,7 @@ export class UpdateDocumentPayloadDto implements Partial<Document> {
 export class AnyBlockDto {
 	@ApiPropertyOptional()
 	id!: string;
-	@ApiProperty({ enum: BlockType })
+	@ApiProperty({ type: Number })
 	type!: BlockType;
 	@ApiPropertyOptional({ type: () => [AnyBlockDto] })
 	children?: AnyBlock[];

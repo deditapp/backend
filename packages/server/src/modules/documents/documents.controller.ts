@@ -1,4 +1,4 @@
-import type { Document, RootBlock } from "@dedit/models/dist/v1";
+import type { RootBlock } from "@dedit/models/dist/v1";
 import { Bearer } from "src/decorators/bearer.decorator";
 import { AuthenticatedGuard } from "src/guards/AuthenticatedGuard";
 import { DocumentGuard } from "src/guards/DocumentGuard";
