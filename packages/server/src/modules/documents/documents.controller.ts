@@ -1,4 +1,4 @@
-import type { Document } from "@dedit/models/dist/v1";
+import type { Document, RootBlock } from "@dedit/models/dist/v1";
 import { Bearer } from "src/decorators/bearer.decorator";
 import { AuthenticatedGuard } from "src/guards/AuthenticatedGuard";
 import { DocumentGuard } from "src/guards/DocumentGuard";
@@ -18,7 +18,7 @@ import {
 import { ApiResponse } from "@nestjs/swagger";
 import { User } from "@prisma/client";
 
-import { DocumentDto, UpdateDocumentPayloadDto } from "./documents.dto";
+import { DocumentDto, UpdateDocumentPayloadDto, UpdateRootBlockDto } from "./documents.dto";
 import { DocumentService } from "./services/document.service";
 
 @Controller({ path: "/documents", version: "1" })
@@ -70,6 +70,26 @@ export class DocumentsControllerV1 {
 		@Body() update: UpdateDocumentPayloadDto
 	): Promise<string> {
 		await this.documents.update(id, { ...update, id });
+		return id;
+	}
+
+	@Get(":documentId/content")
+	@ApiResponse({ status: 200, type: String })
+	async fetchDocumentContent(@Param() id: string): Promise<RootBlock> {
+		const result = await this.documents.fetchContent(id);
+		if (result.isErr()) {
+			throw result.unwrapErr();
+		}
+		return result.unwrap();
+	}
+
+	@Patch(":documentId/content")
+	@ApiResponse({ status: 200, type: String })
+	async updateDocumentContent(
+		@Param("documentId") id: string,
+		@Body() update: UpdateRootBlockDto
+	): Promise<string> {
+		await this.documents.updateContent(id, update);
 		return id;
 	}
 }

@@ -1,5 +1,6 @@
 import { ValidationError } from "joi";
 import { MongoClient, MongoError } from "mongodb";
+import { DeepPartial } from "src/types/utils";
 import { v4 as uuid } from "uuid";
 
 import { BlockType, RootBlock } from "@dedit/models/dist/v1";
@@ -84,5 +85,21 @@ export class BlockService implements OnModuleInit, OnModuleDestroy {
 			return res;
 		}
 		return ok(block.id);
+	}
+
+	async update(
+		id: string,
+		block: DeepPartial<RootBlock>
+	): AResult<void, MongoError | ValidationError> {
+		const res = await validate(RootBlockSchema, block);
+		if (res.isErr()) {
+			return res;
+		}
+		const update = { $set: block };
+		const res2 = await intoResult<any, MongoError>(this.blocks.updateOne({ id }, update));
+		if (res2.isErr()) {
+			return res2;
+		}
+		return ok(undefined);
 	}
 }
