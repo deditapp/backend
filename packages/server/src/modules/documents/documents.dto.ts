@@ -32,6 +32,15 @@ export class UpdateDocumentPayloadDto implements Partial<Document> {
 	ownerId!: string;
 }
 
+export class RootBlockDto {
+	@ApiProperty()
+	id!: string;
+	@ApiProperty({ type: Number })
+	type!: BlockType;
+	@ApiProperty({ type: [() => AnyBlockDto] })
+	children!: AnyBlockDto[];
+}
+
 export class AnyBlockDto {
 	@ApiPropertyOptional()
 	id!: string;

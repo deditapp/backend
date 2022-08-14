@@ -18,7 +18,12 @@ import {
 import { ApiResponse } from "@nestjs/swagger";
 import { User } from "@prisma/client";
 
-import { DocumentDto, UpdateDocumentPayloadDto, UpdateRootBlockDto } from "./documents.dto";
+import {
+	DocumentDto,
+	RootBlockDto,
+	UpdateDocumentPayloadDto,
+	UpdateRootBlockDto,
+} from "./documents.dto";
 import { DocumentService } from "./services/document.service";
 
 @Controller({ path: "/documents", version: "1" })
@@ -57,24 +62,46 @@ export class DocumentsControllerV1 {
 	}
 
 	@Post()
-	@ApiResponse({ status: 200, type: String })
-	async create(): Promise<string> {
+	@ApiResponse({ status: 200, type: DocumentDto })
+	async create(): Promise<DocumentDto> {
 		const result = await this.documents.create("00000000-0000-0000-0000-000000000000");
-		return result.unwrap();
+		if (result.isErr()) {
+			throw result.unwrapErr();
+		}
+		const documentResult = await this.documents.document(result.unwrap());
+		if (documentResult.isErr()) {
+			throw documentResult.unwrapErr();
+		}
+		const document = documentResult.unwrap();
+		if (!document) {
+			throw new NotFoundException();
+		}
+		return document;
 	}
 
 	@Patch(":documentId")
-	@ApiResponse({ status: 200, type: String })
+	@ApiResponse({ status: 200, type: DocumentDto })
 	async update(
 		@Param("documentId") id: string,
 		@Body() update: UpdateDocumentPayloadDto
-	): Promise<string> {
-		await this.documents.update(id, { ...update, id });
-		return id;
+	): Promise<DocumentDto> {
+		const result = await this.documents.update(id, { ...update, id });
+		if (result.isErr()) {
+			throw result.unwrapErr();
+		}
+		const documentResult = await this.documents.document(id);
+		if (documentResult.isErr()) {
+			throw documentResult.unwrapErr();
+		}
+		const document = documentResult.unwrap();
+		if (!document) {
+			throw new NotFoundException();
+		}
+		return document;
 	}
 
 	@Get(":documentId/content")
-	@ApiResponse({ status: 200, type: String })
+	@ApiResponse({ status: 200, type: RootBlockDto })
 	async fetchDocumentContent(@Param() id: string): Promise<RootBlock> {
 		const result = await this.documents.fetchContent(id);
 		if (result.isErr()) {
@@ -84,12 +111,19 @@ export class DocumentsControllerV1 {
 	}
 
 	@Patch(":documentId/content")
-	@ApiResponse({ status: 200, type: String })
+	@ApiResponse({ status: 200, type: RootBlockDto })
 	async updateDocumentContent(
 		@Param("documentId") id: string,
 		@Body() update: UpdateRootBlockDto
-	): Promise<string> {
-		await this.documents.updateContent(id, update);
-		return id;
+	): Promise<RootBlock> {
+		const updateResult = await this.documents.updateContent(id, update);
+		if (updateResult.isErr()) {
+			throw updateResult.unwrapErr();
+		}
+		const rootBlock = (await this.documents.fetchContent(id)).unwrap();
+		if (!rootBlock) {
+			throw new NotFoundException();
+		}
+		return rootBlock;
 	}
 }

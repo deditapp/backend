@@ -103,7 +103,7 @@ export class DocumentService {
 			return blockCreateResult;
 		}
 		const blockId = blockCreateResult.unwrap();
-		// create document
+		// create document and first document revision
 		const documentCreateResult = await intoResult<PrismaDocument, PrismaError>(
 			this.prisma.document.create({
 				data: {
