@@ -65,13 +65,19 @@ export class AnyBlockDto {
 /**
  * Data transfer object for `DocumentRevision` type.
  */
-export class DocumentRevisionDto implements Omit<DocumentRevision, "blockId" | "createdAt"> {
+export class PartialDocumentRevisionDto implements Omit<DocumentRevision, "blockId" | "createdAt"> {
 	@ApiProperty()
 	id!: string;
 	@ApiProperty()
 	documentId!: string;
 	@ApiProperty({ type: String })
 	createdAt!: string;
+}
+
+/**
+ * Data transfer object for `DocumentRevision` type.
+ */
+export class DocumentRevisionDto extends PartialDocumentRevisionDto {
 	@ApiProperty({ type: RootBlockDto })
 	content!: RootBlock;
 }
@@ -88,7 +94,7 @@ export class RevisionsControllerV1 {
 	@Get("/revisions")
 	@ApiParam({ name: "documentId", type: String, description: "The document ID" })
 	@ApiOperation({ operationId: "getDocumentRevisions" })
-	@ApiOkResponse({ type: [DocumentRevisionDto] })
+	@ApiOkResponse({ type: [PartialDocumentRevisionDto] })
 	async getDocumentRevisions(@Param("documentId") documentId: string): Promise<DocumentRevision[]> {
 		const result = await this.revisions.getRevisions(documentId);
 		if (result.isErr()) {
@@ -103,12 +109,26 @@ export class RevisionsControllerV1 {
 	@ApiOkResponse({ type: DocumentRevisionDto })
 	async getLatestDocumentRevision(
 		@Param("documentId") documentId: string
-	): Promise<DocumentRevision> {
-		const result = await this.revisions.getLatestRevision(documentId);
-		if (result.isErr()) {
-			throw new InternalServerErrorException(result.unwrapErr());
+	): Promise<DocumentRevisionDto> {
+		const revisionResult = await this.revisions.getLatestRevision(documentId);
+		if (revisionResult.isErr()) {
+			throw new InternalServerErrorException(revisionResult.unwrapErr());
 		}
-		return result.unwrap();
+		const revision = revisionResult.unwrap();
+		const contentResult = await this.blocks.getBlock(revisionResult.unwrap().blockId);
+		if (contentResult.isErr()) {
+			console.error(contentResult.unwrapErr());
+			throw new InternalServerErrorException(contentResult.unwrapErr());
+		}
+		const content = contentResult.unwrap();
+		if (!content) {
+			throw new InternalServerErrorException("Content not found");
+		}
+		return {
+			...revision,
+			content,
+			createdAt: revision.createdAt.toISOString(),
+		};
 	}
 
 	@Post("/revisions")
@@ -117,16 +137,19 @@ export class RevisionsControllerV1 {
 	@ApiOperation({ operationId: "createDocumentRevision" })
 	@ApiOkResponse({ type: DocumentRevisionDto })
 	async createDocumentRevision(
+		@Param("documentId")
 		documentId: string,
 		@Body()
 		payload: CreateRootBlockDto
 	): Promise<DocumentRevision> {
 		const block = await this.blocks.insertBlock(payload as PartialRootBlock);
 		if (block.isErr()) {
+			console.error(block.unwrapErr());
 			throw new InternalServerErrorException(block.unwrapErr());
 		}
 		const revision = await this.revisions.createRevision(documentId, block.unwrap().id);
 		if (revision.isErr()) {
+			console.error(revision.unwrapErr());
 			throw new InternalServerErrorException(revision.unwrapErr());
 		}
 		return revision.unwrap();

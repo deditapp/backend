@@ -92,7 +92,7 @@ export class RevisionsService {
 		return intoResult<DocumentRevision, PrismaError>(
 			this.prisma.documentRevision.create({
 				data: {
-					documentId,
+					document: { connect: { id: documentId } },
 					blockId: rootBlockId,
 				},
 			})

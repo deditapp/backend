@@ -3,12 +3,10 @@ import { MongoClient, MongoError } from "mongodb";
 import { v4 as uuid } from "uuid";
 
 import { BlockType, RootBlock } from "@dedit/models/dist/v1";
-import { RootBlockSchema } from "@dedit/models/dist/v1/validation/block";
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
 import { AResult, intoResult, ok } from "../../../types/result";
-import { validate } from "../../../types/validate";
 
 /**
  * Payload type for `BlocksService.insertBlock`.
@@ -56,9 +54,10 @@ export class BlocksService implements OnModuleInit, OnModuleDestroy {
 		if (res.isOk() && res.unwrap() === null) {
 			return ok(undefined);
 		}
-		// return block if found
-		this.logger.log("Validating block...");
-		return validate(RootBlockSchema, res.unwrap());
+		// remove mongo _id field
+		const block = res.unwrap();
+		delete block._id;
+		return block;
 	}
 
 	/**
@@ -89,6 +88,8 @@ export class BlocksService implements OnModuleInit, OnModuleDestroy {
 	 */
 	async insertBlock(block: PartialRootBlock): AResult<RootBlock, MongoError> {
 		const rootBlock: RootBlock = { ...block, id: uuid(), type: BlockType.Root };
-		return intoResult<any, MongoError>(this.blocks.insertOne(rootBlock));
+		return (await intoResult<any, MongoError>(this.blocks.insertOne(rootBlock))).map(
+			() => rootBlock
+		);
 	}
 }
