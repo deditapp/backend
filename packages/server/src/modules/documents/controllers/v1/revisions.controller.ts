@@ -72,7 +72,7 @@ export class DocumentRevisionDto implements Omit<DocumentRevision, "blockId" | "
 	documentId!: string;
 	@ApiProperty({ type: String })
 	createdAt!: string;
-	@ApiProperty({ type: [() => RootBlockDto] })
+	@ApiProperty({ type: RootBlockDto })
 	content!: RootBlock;
 }
 
