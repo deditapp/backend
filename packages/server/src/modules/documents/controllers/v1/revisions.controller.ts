@@ -12,6 +12,7 @@ import {
 } from "@nestjs/common";
 import {
 	ApiBody,
+	ApiOkResponse,
 	ApiOperation,
 	ApiParam,
 	ApiProperty,
@@ -84,9 +85,10 @@ export class RevisionsControllerV1 {
 		private readonly blocks: BlocksService
 	) {}
 
-	@Get("/")
+	@Get("/revisions")
 	@ApiParam({ name: "documentId", type: String, description: "The document ID" })
 	@ApiOperation({ operationId: "getDocumentRevisions" })
+	@ApiOkResponse({ type: [DocumentRevisionDto] })
 	async getDocumentRevisions(@Param("documentId") documentId: string): Promise<DocumentRevision[]> {
 		const result = await this.revisions.getRevisions(documentId);
 		if (result.isErr()) {
@@ -95,10 +97,25 @@ export class RevisionsControllerV1 {
 		return result.unwrap();
 	}
 
-	@Post("/")
+	@Get("/revisions/latest")
+	@ApiParam({ name: "documentId", type: String, description: "The document ID" })
+	@ApiOperation({ operationId: "getLatestDocumentRevision" })
+	@ApiOkResponse({ type: [DocumentRevisionDto] })
+	async getLatestDocumentRevision(
+		@Param("documentId") documentId: string
+	): Promise<DocumentRevision> {
+		const result = await this.revisions.getLatestRevision(documentId);
+		if (result.isErr()) {
+			throw new InternalServerErrorException(result.unwrapErr());
+		}
+		return result.unwrap();
+	}
+
+	@Post("/revisions")
 	@ApiParam({ name: "documentId", type: String, description: "The document ID" })
 	@ApiBody({ type: CreateRootBlockDto, description: "The editor AST" })
 	@ApiOperation({ operationId: "createDocumentRevision" })
+	@ApiOkResponse({ type: DocumentRevisionDto })
 	async createDocumentRevision(
 		documentId: string,
 		@Body()
