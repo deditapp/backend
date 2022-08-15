@@ -1,10 +1,10 @@
-import type { RootBlock } from "@dedit/models/dist/v1";
 import { Bearer } from "src/decorators/bearer.decorator";
 import { AuthenticatedGuard } from "src/guards/AuthenticatedGuard";
 import { DocumentGuard } from "src/guards/DocumentGuard";
 import { IntoUser } from "src/pipes/into-user.pipe";
 import { UserService } from "src/services/user.service";
 
+import { Document } from "@dedit/models/dist/v1";
 import {
 	Body,
 	Controller,
@@ -15,25 +15,47 @@ import {
 	Post,
 	UseGuards,
 } from "@nestjs/common";
-import { ApiResponse } from "@nestjs/swagger";
+import { ApiBody, ApiProperty, ApiPropertyOptional, ApiResponse } from "@nestjs/swagger";
 import { User } from "@prisma/client";
 
-import {
-	DocumentDto,
-	RootBlockDto,
-	UpdateDocumentPayloadDto,
-	UpdateRootBlockDto,
-} from "./documents.dto";
-import { DocumentService } from "./services/document.service";
+import { DocumentsService } from "../../services/documents.service";
+
+export class DocumentDto implements Document {
+	@ApiProperty()
+	id!: string;
+	@ApiProperty()
+	title!: string;
+	@ApiProperty()
+	tags!: string[];
+	@ApiProperty()
+	createdAt!: string;
+	@ApiProperty()
+	updatedAt!: string;
+	@ApiProperty()
+	ownerId!: string;
+}
+
+export class UpdateDocumentPayloadDto implements Partial<Document> {
+	@ApiPropertyOptional()
+	title!: string;
+	@ApiPropertyOptional()
+	tags!: string[];
+	@ApiPropertyOptional()
+	createdAt!: string;
+	@ApiPropertyOptional()
+	updatedAt!: string;
+	@ApiPropertyOptional()
+	ownerId!: string;
+}
 
 @Controller({ path: "/documents", version: "1" })
 @UseGuards(AuthenticatedGuard)
 export class DocumentsControllerV1 {
-	constructor(private readonly users: UserService, private readonly documents: DocumentService) {}
+	constructor(private readonly users: UserService, private readonly documents: DocumentsService) {}
 
 	@Get()
 	@ApiResponse({ type: [DocumentDto] })
-	async findMany(@Bearer(IntoUser) user: User): Promise<DocumentDto[]> {
+	async getDocumentsForUser(@Bearer(IntoUser) user: User): Promise<DocumentDto[]> {
 		// lookup raw documents
 		const documents = await this.documents.documentsByOwner(user.id);
 		// if error, throw it
@@ -46,7 +68,7 @@ export class DocumentsControllerV1 {
 	@Get(":documentId")
 	@UseGuards(DocumentGuard)
 	@ApiResponse({ type: DocumentDto })
-	async findOne(
+	async getDocument(
 		@Bearer(IntoUser) user: User,
 		@Param("documentId") id: string
 	): Promise<DocumentDto> {
@@ -62,8 +84,12 @@ export class DocumentsControllerV1 {
 	}
 
 	@Post()
-	@ApiResponse({ status: 200, type: DocumentDto })
-	async create(): Promise<DocumentDto> {
+	@ApiResponse({ status: 200, type: DocumentDto, description: "Returns the new document." })
+	@ApiResponse({
+		status: 500,
+		description: "An internal server error occurred while creating the new document.",
+	})
+	async createDocument(): Promise<DocumentDto> {
 		const result = await this.documents.create("00000000-0000-0000-0000-000000000000");
 		if (result.isErr()) {
 			throw result.unwrapErr();
@@ -80,8 +106,13 @@ export class DocumentsControllerV1 {
 	}
 
 	@Patch(":documentId")
-	@ApiResponse({ status: 200, type: DocumentDto })
-	async update(
+	@ApiResponse({ status: 200, type: DocumentDto, description: "Returns the updated document." })
+	@ApiResponse({
+		status: 500,
+		description: "An internal server error occurred while updating the document.",
+	})
+	@ApiBody({ type: UpdateDocumentPayloadDto })
+	async updateDocument(
 		@Param("documentId") id: string,
 		@Body() update: UpdateDocumentPayloadDto
 	): Promise<DocumentDto> {
@@ -98,32 +129,5 @@ export class DocumentsControllerV1 {
 			throw new NotFoundException();
 		}
 		return document;
-	}
-
-	@Get(":documentId/content")
-	@ApiResponse({ status: 200, type: RootBlockDto })
-	async fetchDocumentContent(@Param() id: string): Promise<RootBlock> {
-		const result = await this.documents.fetchContent(id);
-		if (result.isErr()) {
-			throw result.unwrapErr();
-		}
-		return result.unwrap();
-	}
-
-	@Patch(":documentId/content")
-	@ApiResponse({ status: 200, type: RootBlockDto })
-	async updateDocumentContent(
-		@Param("documentId") id: string,
-		@Body() update: UpdateRootBlockDto
-	): Promise<RootBlock> {
-		const updateResult = await this.documents.updateContent(id, update);
-		if (updateResult.isErr()) {
-			throw updateResult.unwrapErr();
-		}
-		const rootBlock = (await this.documents.fetchContent(id)).unwrap();
-		if (!rootBlock) {
-			throw new NotFoundException();
-		}
-		return rootBlock;
 	}
 }

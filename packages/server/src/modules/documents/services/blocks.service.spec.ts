@@ -4,11 +4,11 @@ import { MongoClient } from "mongodb";
 import { BlockType } from "@dedit/models/dist/v1";
 import { ConfigService } from "@nestjs/config";
 
-import { BlockService } from "./block.service";
+import { BlocksService } from "./blocks.service";
 
 describe("BlockService", () => {
 	let mongo: MongoClient;
-	let blockService: BlockService;
+	let blockService: BlocksService;
 
 	// create utility mongo connection
 	beforeAll(async () => {
@@ -27,7 +27,7 @@ describe("BlockService", () => {
 	// create a new BlocksService for every method.
 	beforeEach(async () => {
 		const config = new ConfigService();
-		blockService = new BlockService(config);
+		blockService = new BlocksService(config);
 		await blockService.onModuleInit();
 	});
 
@@ -39,7 +39,7 @@ describe("BlockService", () => {
 
 	describe("create", () => {
 		it("should create a new block", async () => {
-			const result = await blockService.create();
+			const result = await blockService.createEmpty();
 			// unwrap block
 			const block = result.unwrap();
 			expect(block).toBeDefined();
@@ -65,7 +65,7 @@ describe("BlockService", () => {
 		});
 
 		it("should fetch a root block with the given ID", async () => {
-			const result = await blockService.block("00000000-0000-0000-0000-000000000000");
+			const result = await blockService.getBlock("00000000-0000-0000-0000-000000000000");
 			// unwrap block
 			const block = result.unwrap();
 			expect(block).toBeDefined();

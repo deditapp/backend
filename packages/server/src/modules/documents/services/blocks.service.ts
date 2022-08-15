@@ -1,6 +1,5 @@
 import { ValidationError } from "joi";
 import { MongoClient, MongoError } from "mongodb";
-import { DeepPartial } from "src/types/utils";
 import { v4 as uuid } from "uuid";
 
 import { BlockType, RootBlock } from "@dedit/models/dist/v1";
@@ -11,11 +10,19 @@ import { ConfigService } from "@nestjs/config";
 import { AResult, intoResult, ok } from "../../../types/result";
 import { validate } from "../../../types/validate";
 
+/**
+ * Payload type for `BlocksService.insertBlock`.
+ */
+export type PartialRootBlock = Omit<RootBlock, "id" | "type">;
+
 @Injectable()
-export class BlockService implements OnModuleInit, OnModuleDestroy {
-	private readonly logger = new Logger(BlockService.name);
+export class BlocksService implements OnModuleInit, OnModuleDestroy {
+	private readonly logger = new Logger(BlocksService.name);
 	private readonly mongo = new MongoClient(this.config.getOrThrow("MONGODB_URL"));
 
+	/**
+	 * Reference to the "blocks" collection.
+	 */
 	private get blocks() {
 		return this.mongo.db("dedit").collection("blocks");
 	}
@@ -38,7 +45,7 @@ export class BlockService implements OnModuleInit, OnModuleDestroy {
 	 * @param id The root block ID.
 	 * @returns The root block, if it is found.
 	 */
-	async block(id: string): AResult<RootBlock | undefined, MongoError | ValidationError> {
+	async getBlock(id: string): AResult<RootBlock | undefined, MongoError | ValidationError> {
 		this.logger.log(`Fetching block ${id}...`);
 		const res = await intoResult<any, MongoError>(this.blocks.findOne({ id }));
 		// return error if failed
@@ -55,24 +62,12 @@ export class BlockService implements OnModuleInit, OnModuleDestroy {
 	}
 
 	/**
-	 * Fetch a root block and recursively build the document tree.
-	 * @param id The root block ID.
-	 * @returns The full document tree.
-	 */
-	async tree(id: string): AResult<RootBlock | undefined, MongoError | ValidationError> {
-		const res = await this.block(id);
-		if (res.isErr()) {
-			return res;
-		}
-		return res;
-	}
-
-	/**
-	 * Create a new root block.
+	 * Create an empty root block.
 	 * @param block
 	 * @returns
 	 */
-	async create(): AResult<string, MongoError> {
+	async createEmpty(): AResult<string, MongoError> {
+		this.logger.verbose("Creating new root block...");
 		const block: RootBlock = {
 			id: uuid(),
 			children: [],
@@ -84,22 +79,16 @@ export class BlockService implements OnModuleInit, OnModuleDestroy {
 		if (res.isErr()) {
 			return res;
 		}
+		this.logger.verbose(`Created root block with ID ${block.id}`);
 		return ok(block.id);
 	}
 
-	async update(
-		id: string,
-		block: DeepPartial<RootBlock>
-	): AResult<void, MongoError | ValidationError> {
-		const res = await validate(RootBlockSchema, block);
-		if (res.isErr()) {
-			return res;
-		}
-		const update = { $set: block };
-		const res2 = await intoResult<any, MongoError>(this.blocks.updateOne({ id }, update));
-		if (res2.isErr()) {
-			return res2;
-		}
-		return ok(undefined);
+	/**
+	 * Insert the target block into the database.
+	 * @param block The block to insert.
+	 */
+	async insertBlock(block: PartialRootBlock): AResult<RootBlock, MongoError> {
+		const rootBlock: RootBlock = { ...block, id: uuid(), type: BlockType.Root };
+		return intoResult<any, MongoError>(this.blocks.insertOne(rootBlock));
 	}
 }

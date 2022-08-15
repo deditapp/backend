@@ -2,14 +2,13 @@ import { DateTime } from "luxon";
 import { MongoError } from "mongodb";
 import { PrismaService } from "src/services/prisma.service";
 import { PrismaError } from "src/types/errors";
-import { AResult, err, intoResult, ok } from "src/types/result";
-import { DeepPartial } from "src/types/utils";
+import { AResult, intoResult, ok } from "src/types/result";
 
-import { Document, RootBlock } from "@dedit/models/dist/v1";
+import { Document } from "@dedit/models/dist/v1";
 import { Injectable, Logger } from "@nestjs/common";
 import { Document as PrismaDocument } from "@prisma/client";
 
-import { BlockService } from "./block.service";
+import { BlocksService } from "./blocks.service";
 
 interface DocumentQuery {
 	id: string | string[];
@@ -31,10 +30,10 @@ const prismaDocToDoc = (doc: PrismaDocument | PrismaDocument[]) =>
 		  } as Document);
 
 @Injectable()
-export class DocumentService {
-	private readonly logger = new Logger(DocumentService.name);
+export class DocumentsService {
+	private readonly logger = new Logger(DocumentsService.name);
 
-	constructor(private readonly blocks: BlockService, private readonly prisma: PrismaService) {}
+	constructor(private readonly blocks: BlocksService, private readonly prisma: PrismaService) {}
 
 	/**
 	 * Fetch a document by its ID.
@@ -98,7 +97,7 @@ export class DocumentService {
 	async create(ownerId: string): AResult<string, MongoError | PrismaError> {
 		this.logger.verbose("Create new document");
 		// create new root block
-		const blockCreateResult = await this.blocks.create();
+		const blockCreateResult = await this.blocks.createEmpty();
 		if (blockCreateResult.isErr()) {
 			return blockCreateResult;
 		}
@@ -148,32 +147,5 @@ export class DocumentService {
 				})
 				.then(() => true)
 		);
-	}
-
-	/**
-	 * Fetch the root block of a document.
-	 * @param id The ID of the document.
-	 * @returns
-	 */
-	async fetchContent(id: string): AResult<RootBlock, Error> {
-		const result = await this.blocks.tree(id);
-		if (result.isErr()) {
-			return result;
-		}
-		const root = result.unwrap();
-		if (!root) {
-			return err(new Error("No root block found"));
-		}
-		return ok(root);
-	}
-
-	/**
-	 * Update the content of a document.
-	 * @param id The ID of the document.
-	 * @param payload The new content.
-	 * @returns True if the operation succeeded.
-	 */
-	async updateContent(id: string, payload: DeepPartial<RootBlock>): AResult<true, Error> {
-		return (await this.blocks.update(id, payload)).map((_) => true);
 	}
 }
