@@ -57,7 +57,7 @@ export class DocumentsControllerV1 {
 	@ApiResponse({ type: [DocumentDto] })
 	async getDocumentsForUser(@Bearer(IntoUser) user: User): Promise<DocumentDto[]> {
 		// lookup raw documents
-		const documents = await this.documents.documentsByOwner(user.id);
+		const documents = await this.documents.getDocumentsByOwner(user.id);
 		// if error, throw it
 		if (documents.isErr()) {
 			throw documents.unwrapErr();
@@ -90,19 +90,11 @@ export class DocumentsControllerV1 {
 		description: "An internal server error occurred while creating the new document.",
 	})
 	async createDocument(): Promise<DocumentDto> {
-		const result = await this.documents.create("00000000-0000-0000-0000-000000000000");
+		const result = await this.documents.createDocument("00000000-0000-0000-0000-000000000000");
 		if (result.isErr()) {
 			throw result.unwrapErr();
 		}
-		const documentResult = await this.documents.document(result.unwrap());
-		if (documentResult.isErr()) {
-			throw documentResult.unwrapErr();
-		}
-		const document = documentResult.unwrap();
-		if (!document) {
-			throw new NotFoundException();
-		}
-		return document;
+		return result.unwrap();
 	}
 
 	@Patch(":documentId")
@@ -116,11 +108,11 @@ export class DocumentsControllerV1 {
 		@Param("documentId") id: string,
 		@Body() update: UpdateDocumentPayloadDto
 	): Promise<DocumentDto> {
-		const result = await this.documents.update(id, { ...update, id });
+		const result = await this.documents.updateDocument(id, { ...update, id });
 		if (result.isErr()) {
 			throw result.unwrapErr();
 		}
-		const documentResult = await this.documents.document(id);
+		const documentResult = await this.documents.getDocument(id);
 		if (documentResult.isErr()) {
 			throw documentResult.unwrapErr();
 		}

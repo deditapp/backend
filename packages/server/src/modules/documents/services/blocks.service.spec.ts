@@ -6,7 +6,7 @@ import { ConfigService } from "@nestjs/config";
 
 import { BlocksService } from "./blocks.service";
 
-describe("BlockService", () => {
+describe("BlocksService", () => {
 	let mongo: MongoClient;
 	let blockService: BlocksService;
 

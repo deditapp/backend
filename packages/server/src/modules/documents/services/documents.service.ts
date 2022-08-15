@@ -40,7 +40,7 @@ export class DocumentsService {
 	 * @param id The document ID.
 	 * @returns The document, if it is found.
 	 */
-	async document(id: string): AResult<Document | undefined, unknown> {
+	async getDocument(id: string): AResult<Document | undefined, unknown> {
 		this.logger.verbose(`Fetch document ${id}`);
 
 		const document = await this.prisma.document.findFirst({
@@ -60,9 +60,9 @@ export class DocumentsService {
 	 * @param ownerId The ID of the owner.
 	 * @returns The documents, if they are found.
 	 */
-	async documentsByOwner(ownerId: string): AResult<Document[], PrismaError> {
+	async getDocumentsByOwner(ownerId: string): AResult<Document[], PrismaError> {
 		this.logger.verbose(`Fetch documents by owner ${ownerId}`);
-		return await this.documents({ ownerId });
+		return await this.getDocuments({ ownerId });
 	}
 
 	/**
@@ -71,7 +71,7 @@ export class DocumentsService {
 	 * @param options The options.
 	 * @returns The documents, if they are found.
 	 */
-	async documents(query: Partial<DocumentQuery> = {}): AResult<Document[], PrismaError> {
+	async getDocuments(query: Partial<DocumentQuery> = {}): AResult<Document[], PrismaError> {
 		return (
 			await intoResult<PrismaDocument[], PrismaError>(
 				this.prisma.document.findMany({
@@ -94,7 +94,7 @@ export class DocumentsService {
 	 * Create a new document.
 	 * @param ownerId The ID of the owner.
 	 */
-	async create(ownerId: string): AResult<string, MongoError | PrismaError> {
+	async createDocument(ownerId: string): AResult<Document, MongoError | PrismaError> {
 		this.logger.verbose("Create new document");
 		// create new root block
 		const blockCreateResult = await this.blocks.createEmpty();
@@ -106,7 +106,7 @@ export class DocumentsService {
 		const documentCreateResult = await intoResult<PrismaDocument, PrismaError>(
 			this.prisma.document.create({
 				data: {
-					ownerId,
+					owner: { connect: { id: ownerId } },
 					revisions: { create: [{ blockId }] },
 				},
 			})
@@ -115,28 +115,18 @@ export class DocumentsService {
 		if (documentCreateResult.isErr()) {
 			return documentCreateResult;
 		}
-		const { id: documentId } = documentCreateResult.unwrap();
-		// append to user
-		const userAppendResult = await intoResult<any, PrismaError>(
-			this.prisma.user.update({
-				where: { id: ownerId },
-				data: {
-					documents: {
-						connect: { id: documentId },
-					},
-				},
-			})
-		);
-		// if operation failed
-		if (userAppendResult.isErr()) {
-			return userAppendResult;
-		}
-		return ok(documentId);
+		return ok(prismaDocToDoc(documentCreateResult.unwrap()));
 	}
 
-	async update(id: string, payload: Document): AResult<true, Error> {
+	/**
+	 * Update a document with the given ID.
+	 * @param id The document ID.
+	 * @param payload The update payload
+	 * @returns The upgraded document
+	 */
+	async updateDocument(id: string, payload: Document): AResult<Document, Error> {
 		this.logger.verbose(`Update document ${id}`);
-		return await intoResult<true, Error>(
+		return intoResult<Document, Error>(
 			this.prisma.document
 				.update({
 					where: { id },
@@ -145,7 +135,22 @@ export class DocumentsService {
 						updatedAt: new Date().toISOString(),
 					},
 				})
-				.then(() => true)
+				.then((doc) => prismaDocToDoc(doc))
+		);
+	}
+
+	/**
+	 * Delete a document with the given ID.
+	 * @param id The ID of the document.
+	 * @returns The ID of the deleted document.
+	 */
+	async deleteDocument(id: string): AResult<string, Error> {
+		return intoResult(
+			this.prisma.document
+				.delete({
+					where: { id },
+				})
+				.then((doc) => doc.id)
 		);
 	}
 }
