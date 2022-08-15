@@ -100,7 +100,7 @@ export class RevisionsControllerV1 {
 	@Get("/revisions/latest")
 	@ApiParam({ name: "documentId", type: String, description: "The document ID" })
 	@ApiOperation({ operationId: "getLatestDocumentRevision" })
-	@ApiOkResponse({ type: [DocumentRevisionDto] })
+	@ApiOkResponse({ type: DocumentRevisionDto })
 	async getLatestDocumentRevision(
 		@Param("documentId") documentId: string
 	): Promise<DocumentRevision> {
