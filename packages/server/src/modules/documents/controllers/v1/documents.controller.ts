@@ -15,7 +15,14 @@ import {
 	Post,
 	UseGuards,
 } from "@nestjs/common";
-import { ApiBody, ApiProperty, ApiPropertyOptional, ApiResponse } from "@nestjs/swagger";
+import {
+	ApiBody,
+	ApiOperation,
+	ApiProperty,
+	ApiPropertyOptional,
+	ApiResponse,
+	ApiTags,
+} from "@nestjs/swagger";
 import { User } from "@prisma/client";
 
 import { DocumentsService } from "../../services/documents.service";
@@ -50,11 +57,13 @@ export class UpdateDocumentPayloadDto implements Partial<Document> {
 
 @Controller({ path: "/documents", version: "1" })
 @UseGuards(AuthenticatedGuard)
+@ApiTags("documents")
 export class DocumentsControllerV1 {
 	constructor(private readonly users: UserService, private readonly documents: DocumentsService) {}
 
 	@Get()
 	@ApiResponse({ type: [DocumentDto] })
+	@ApiOperation({ operationId: "getDocumentsForUser" })
 	async getDocumentsForUser(@Bearer(IntoUser) user: User): Promise<DocumentDto[]> {
 		// lookup raw documents
 		const documents = await this.documents.getDocumentsByOwner(user.id);
@@ -67,6 +76,7 @@ export class DocumentsControllerV1 {
 
 	@Get(":documentId")
 	@UseGuards(DocumentGuard)
+	@ApiOperation({ operationId: "getDocument" })
 	@ApiResponse({ type: DocumentDto })
 	async getDocument(
 		@Bearer(IntoUser) user: User,
@@ -84,6 +94,7 @@ export class DocumentsControllerV1 {
 	}
 
 	@Post()
+	@ApiOperation({ operationId: "createDocument" })
 	@ApiResponse({ status: 200, type: DocumentDto, description: "Returns the new document." })
 	@ApiResponse({
 		status: 500,
@@ -98,6 +109,7 @@ export class DocumentsControllerV1 {
 	}
 
 	@Patch(":documentId")
+	@ApiOperation({ operationId: "updateDocument" })
 	@ApiResponse({ status: 200, type: DocumentDto, description: "Returns the updated document." })
 	@ApiResponse({
 		status: 500,

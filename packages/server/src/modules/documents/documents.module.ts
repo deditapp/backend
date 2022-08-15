@@ -9,10 +9,18 @@ import { DocumentsControllerV1 } from "./controllers/v1/documents.controller";
 import { RevisionsControllerV1 } from "./controllers/v1/revisions.controller";
 import { BlocksService } from "./services/blocks.service";
 import { DocumentsService } from "./services/documents.service";
+import { RevisionsService } from "./services/revisions.service";
 
 @Module({
 	imports: [ConfigModule],
 	controllers: [DocumentsControllerV1, RevisionsControllerV1],
-	providers: [DocumentsService, BlocksService, PrismaService, UserService, FirebaseService],
+	providers: [
+		BlocksService,
+		DocumentsService,
+		FirebaseService,
+		PrismaService,
+		RevisionsService,
+		UserService,
+	],
 })
 export class DocumentsModule {}

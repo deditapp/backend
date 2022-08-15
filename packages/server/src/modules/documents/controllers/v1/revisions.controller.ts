@@ -10,7 +10,14 @@ import {
 	Post,
 	UseGuards,
 } from "@nestjs/common";
-import { ApiBody, ApiParam, ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import {
+	ApiBody,
+	ApiOperation,
+	ApiParam,
+	ApiProperty,
+	ApiPropertyOptional,
+	ApiTags,
+} from "@nestjs/swagger";
 import { DocumentRevision } from "@prisma/client";
 
 import { BlocksService, PartialRootBlock } from "../../services/blocks.service";
@@ -70,6 +77,7 @@ export class DocumentRevisionDto implements Omit<DocumentRevision, "blockId" | "
 
 @Controller({ path: "/documents/:documentId", version: "1" })
 @UseGuards(AuthenticatedGuard)
+@ApiTags("revisions")
 export class RevisionsControllerV1 {
 	constructor(
 		private readonly revisions: RevisionsService,
@@ -78,6 +86,7 @@ export class RevisionsControllerV1 {
 
 	@Get("/")
 	@ApiParam({ name: "documentId", type: String, description: "The document ID" })
+	@ApiOperation({ operationId: "getDocumentRevisions" })
 	async getDocumentRevisions(@Param("documentId") documentId: string): Promise<DocumentRevision[]> {
 		const result = await this.revisions.getRevisions(documentId);
 		if (result.isErr()) {
@@ -89,6 +98,7 @@ export class RevisionsControllerV1 {
 	@Post("/")
 	@ApiParam({ name: "documentId", type: String, description: "The document ID" })
 	@ApiBody({ type: CreateRootBlockDto, description: "The editor AST" })
+	@ApiOperation({ operationId: "createDocumentRevision" })
 	async createDocumentRevision(
 		documentId: string,
 		@Body()
